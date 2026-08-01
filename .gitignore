@@ -1,0 +1,17 @@
+# Originais de banco de imagem e fotos brutas da SPS.
+# 129 MB, licenciados, e não são necessários para servir o site: o que vai
+# para o ar são as versões processadas em site/img/foto/, geradas por
+# build/imagens.py. Sem esta pasta o site funciona; só não dá para
+# reprocessar as imagens.
+banco/
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# rascunhos e temporários do gerador
+site/__*.html
+__pycache__/
+*.pyc

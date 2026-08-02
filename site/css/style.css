@@ -512,8 +512,6 @@ h1,h2,h3,h4{ font-family:var(--ff-d); font-weight:800; line-height:1.08; letter-
   62%{ opacity:1; transform:translateY(3px) scale(1.06); }
   100%{ opacity:1; transform:none; }
 }
-.pin__leader{ stroke:rgba(255,255,255,.5); stroke-width:1.1; stroke-dasharray:2.5 2.5; fill:none; }
-.pin__anchor-dot{ fill:rgba(255,255,255,.75); }
 .pin__body{ filter:url(#fPin); transition:transform .3s var(--ease); transform-box:fill-box; transform-origin:50% 100%; }
 .pin:hover .pin__body,
 .pin:focus-visible .pin__body,

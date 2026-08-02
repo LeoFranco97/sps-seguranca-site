@@ -543,7 +543,7 @@ def plataforma():
 # -------------------------------------------------------------------- UNIDADES
 
 UNIDADES_INFO = [
-  ("Corporativo", "un-corporativo", "Rua 406B, nº 883", "Morretes, Itapema/SC", "88.220-000",
+  ("Itapema (Corporativo)", "un-corporativo", "Rua 406B, nº 883", "Morretes, Itapema/SC", "88.220-000",
    "Sede administrativa e comercial. É daqui que saem as propostas, os contratos e a coordenação técnica "
    "das cinco unidades.",
    "https://www.google.com/maps/place/SPS+Seguran%C3%A7a+do+Trabalho+-+Corporativo/@-27.1207719,-48.6263447,16z"),

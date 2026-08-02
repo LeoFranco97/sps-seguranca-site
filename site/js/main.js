@@ -157,7 +157,7 @@ var Mapa = (function () {
      Itapema distam ~700 m, então nesse zoom eles quase coincidem: quem estiver
      selecionado vem para a frente. */
   var UNIDADES = [
-    { id:'corporativo', nome:'Corporativo', curto:'CORPORATIVO',
+    { id:'corporativo', nome:'Corporativo', curto:'ITAPEMA (Corporativo)',
       x:904.3, y:217.8,
       end:'Rua 406B, nº 883 &middot; Morretes, Itapema/SC &middot; CEP 88.220-000',
       maps:'https://www.google.com/maps/place/SPS+Seguran%C3%A7a+do+Trabalho+-+Corporativo/@-27.1207719,-48.6263447,16z/data=!4m7!3m6!1s0x2f2fb178b66c50bb:0xce917bdd12d11132!8m2!3d-27.1207719!4d-48.61759!16s%2Fg%2F11xkr3jfw7' },

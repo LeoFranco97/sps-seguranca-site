@@ -153,31 +153,32 @@ var Mapa = (function () {
   var VIEW_STATE = { cx: 500, cy: 320, z: 1 };
   var VIEW_ZOOM  = { cx: 898, cy: 192, z: 5.4 };
 
-  /* Corporativo e Itapema ficam a ~700 m um do outro: mesmo no zoom os alfinetes
-     se sobrepõem, então cada um recebe um deslocamento de tela com linha-guia. */
+  /* Cada alfinete fica exatamente sobre a coordenada da unidade. Corporativo e
+     Itapema distam ~700 m, então nesse zoom eles quase coincidem: quem estiver
+     selecionado vem para a frente. */
   var UNIDADES = [
     { id:'corporativo', nome:'Corporativo', curto:'CORPORATIVO',
-      x:904.3, y:217.8, ox:-56, oy:-30, la:true,
+      x:904.3, y:217.8,
       end:'Rua 406B, nº 883 &middot; Morretes, Itapema/SC &middot; CEP 88.220-000',
       maps:'https://www.google.com/maps/place/SPS+Seguran%C3%A7a+do+Trabalho+-+Corporativo/@-27.1207719,-48.6263447,16z/data=!4m7!3m6!1s0x2f2fb178b66c50bb:0xce917bdd12d11132!8m2!3d-27.1207719!4d-48.61759!16s%2Fg%2F11xkr3jfw7' },
 
     { id:'itapema', nome:'Itapema', curto:'ITAPEMA',
-      x:905.4, y:218.3, ox:34, oy:-20,
+      x:905.4, y:218.3,
       end:'Rua 434, nº 88 &middot; Morretes, Itapema/SC &middot; CEP 88.220-000',
       maps:'https://www.google.com/maps/place/SPS+Seguran%C3%A7a+do+Trabalho+-+Unidade+Itapema/@-27.1235166,-48.6132515,17z/data=!3m1!4b1!4m6!3m5!1s0x94d8b1dbb90e5693:0x871ea7c78721fa99!8m2!3d-27.1235214!4d-48.6106766!16s%2Fg%2F11c0r5hg6n' },
 
     { id:'portobelo', nome:'Porto Belo', curto:'PORTO BELO',
-      x:912.7, y:224.3, ox:26, oy:26,
+      x:912.7, y:224.3,
       end:'Av. Atílio Fontana, nº 387 &middot; Perequê, Porto Belo/SC &middot; CEP 88.210-000',
       maps:'https://www.google.com/maps/place/SPS+treinamentos+e+exames/@-27.1559858,-48.5657683,17z/data=!3m1!4b1!4m6!3m5!1s0x94d8af0008ae7eb7:0x3e6eb8d7434ef5db!8m2!3d-27.1559858!4d-48.5657683!16s%2Fg%2F11x7mf1j3r' },
 
     { id:'itajai', nome:'Itajaí', curto:'ITAJAÍ',
-      x:893.3, y:182.9, ox:0, oy:0,
+      x:893.3, y:182.9,
       end:'Av. Ver. Abrahão João Francisco, nº 3820 &middot; Ressacada, Itajaí/SC &middot; CEP 88.301-335',
       maps:'https://www.google.com/maps/place/SPS+SEGURAN%C3%87A+DO+TRABALHO+UN.+ITAJA%C3%8D%2FSC/@-26.9293605,-48.6851534,17z/data=!3m1!4b1!4m6!3m5!1s0x94d8cd917c4d134b:0x9593293af264a630!8m2!3d-26.9293605!4d-48.6851534!16s%2Fg%2F11rw_vfxnt' },
 
     { id:'picarras', nome:'Balneário Piçarras', curto:'B. PIÇARRAS',
-      x:894.8, y:152.5, ox:0, oy:0,
+      x:894.8, y:152.5,
       end:'Rua 1240, nº 153 &middot; Centro, Balneário Piçarras/SC &middot; CEP 88.380-000',
       maps:'https://www.google.com/maps/place/SPS+SEGURAN%C3%87A+DO+TRABALHO+UN.+BALNE%C3%81RIO+PI%C3%87ARRAS/@-26.7624756,-48.6761676,17z/data=!3m1!4b1!4m6!3m5!1s0x94d8d58a3c8ae211:0x9fcb10d1471dbdb6!8m2!3d-26.7624756!4d-48.6761676!16s%2Fg%2F11smdybq43' }
   ];
@@ -186,7 +187,6 @@ var Mapa = (function () {
   var stage, svg, cam, pinsG, clusterG, badge;
   var view = VIEW_STATE, played = false, active = null;
   var ps = 1;   /* escala dos alfinetes: mantém ~30px na tela em qualquer viewport */
-  var fo = 1;   /* fator de separação entre alfinetes vizinhos */
 
   function el (tag, attrs) {
     var n = document.createElementNS(NS, tag);
@@ -214,12 +214,6 @@ var Mapa = (function () {
     if (!r.width || !r.height) return;
     var render = Math.min(r.width / VB_W, r.height / VB_H);
     ps = Math.max(0.8, Math.min(3.4, 0.9375 / render));
-
-    /* Separação entre alfinetes vizinhos. Em tela larga vale ~0.94px por
-       unidade; num mapa estreito isso viraria um quinto da largura, então
-       encolhe junto. fo converte para dentro do grupo já escalado por ps. */
-    var alvo = 0.94 * Math.min(1, r.width / 700);
-    fo = alvo / (ps * render);
   }
 
   /* Os alfinetes estão dentro de #cam, então a posição é a coordenada
@@ -232,14 +226,56 @@ var Mapa = (function () {
       u.node.setAttribute('transform',
         'translate(' + u.x + ',' + u.y + ') scale(' + k + ')');
 
-      var ox = (u.ox * fo).toFixed(1), oy = (u.oy * fo).toFixed(1);
-      if (u.leader) { u.leader.setAttribute('x2', ox); u.leader.setAttribute('y2', oy); }
-      u.body.setAttribute('transform', 'translate(' + ox + ',' + oy + ')');
-      u.label.setAttribute('x', ox);
-      u.label.setAttribute('y', (u.oy * fo + (u.la ? -38 : 16)).toFixed(1));
+      u.label.setAttribute('x', 0);
+      u.label.setAttribute('y', 16);
     });
+    ajustaRotulos();
     clusterG.setAttribute('transform',
       'translate(' + SC_MAP.cluster.cx + ',' + SC_MAP.cluster.cy + ') scale(' + k + ')');
+  }
+
+  /* Corporativo e Itapema caem sobre o mesmo ponto neste zoom, e dois rótulos
+     no mesmo lugar viram borrão. Em vez de empurrar o alfinete para fora da
+     coordenada real, escondemos o rótulo que colidiria: o nome continua
+     disponível no selo do mapa e no card, e ao selecionar ele reaparece. */
+  function ajustaRotulos () {
+    var r = svg.getBoundingClientRect();
+    var render = Math.min(r.width / VB_W, r.height / VB_H);
+    if (!render) return;
+
+    function bateEm (a, lista) {
+      return lista.some(function (b) {
+        return a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1;
+      });
+    }
+
+    /* os corpos dos alfinetes são obstáculos fixos: o rótulo desvia deles */
+    var ocupado = UNIDADES.map(function (u) {
+      var px = screenX(u.x) * render, py = screenY(u.y) * render;
+      return { x1: px - 12, x2: px + 12, y1: py - 32, y2: py + 2 };
+    });
+
+    /* o selecionado escolhe posição primeiro e sempre aparece */
+    var ordem = UNIDADES.slice().sort(function (a, b) {
+      return (b.id === active ? 1 : 0) - (a.id === active ? 1 : 0);
+    });
+
+    ordem.forEach(function (u) {
+      var px = screenX(u.x) * render, py = screenY(u.y) * render;
+      var mw = u.curto.length * 3.7;                  /* ~7.3px por caractere */
+      var abaixo = { x1: px - mw, x2: px + mw, y1: py + 6,  y2: py + 22 };
+      var acima  = { x1: px - mw, x2: px + mw, y1: py - 52, y2: py - 36 };
+
+      var pos = !bateEm(abaixo, ocupado) ? abaixo
+              : !bateEm(acima, ocupado)  ? acima : null;
+
+      if (!pos && u.id === active) pos = acima;       /* selecionado nunca some */
+      u.label.style.display = pos ? '' : 'none';
+      if (pos) {
+        u.label.setAttribute('y', pos === abaixo ? 16 : -42);
+        ocupado.push(pos);
+      }
+    });
   }
 
   function buildPin (u, i) {
@@ -247,14 +283,6 @@ var Mapa = (function () {
     var g = el('g', { class: 'pin', tabindex: '0', role: 'button',
                       'aria-label': 'Unidade ' + u.nome });
     g.style.setProperty('--pd', (i * 0.13) + 's');
-
-    /* posições de leader, corpo e rótulo são definidas em layoutPins,
-       porque dependem da largura do mapa */
-    if (u.ox || u.oy) {
-      u.leader = el('line', { class: 'pin__leader', x1: 0, y1: 0, x2: 0, y2: 0 });
-      g.appendChild(u.leader);
-      g.appendChild(el('circle', { class: 'pin__anchor-dot', cx: 0, cy: 0, r: 2.4 }));
-    }
 
     var body = el('g', { class: 'pin__body' });
     body.appendChild(el('circle', { class: 'pin__ping', cx: 0, cy: -20, r: 12 }));
@@ -331,8 +359,15 @@ var Mapa = (function () {
       var on = u.id === id;
       u.pin.classList.toggle('is-active', on);
       u.card.classList.toggle('is-active', on);
-      if (on) badge.textContent = u.nome;
+      if (on) {
+        badge.textContent = u.nome;
+        /* SVG não tem z-index: quem vem por último fica por cima. Corporativo
+           e Itapema ficam praticamente no mesmo ponto, então o selecionado
+           precisa ir para o fim da lista para ser visto e clicado. */
+        pinsG.appendChild(u.node);
+      }
     });
+    ajustaRotulos();   /* o selecionado tem prioridade de rótulo */
     if (focusMap && !stage.classList.contains('is-zoomed')) zoomIn();
   }
 

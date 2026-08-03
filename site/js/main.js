@@ -157,7 +157,9 @@ var Mapa = (function () {
      Itapema distam ~700 m, então nesse zoom eles quase coincidem: quem estiver
      selecionado vem para a frente. */
   var UNIDADES = [
-    { id:'corporativo', nome:'Corporativo', curto:'ITAPEMA (Corporativo)',
+    /* rotulo é o que vai no mapa, curto é o que vai no card: no mapa o nome
+       precisa ser curto, no card cabe a cidade junto */
+    { id:'corporativo', nome:'Corporativo', curto:'ITAPEMA (Corporativo)', rotulo:'CORPORATIVO',
       x:904.3, y:217.8,
       end:'Rua 406B, nº 883 &middot; Morretes, Itapema/SC &middot; CEP 88.220-000',
       maps:'https://www.google.com/maps/place/SPS+Seguran%C3%A7a+do+Trabalho+-+Corporativo/@-27.1207719,-48.6263447,16z/data=!4m7!3m6!1s0x2f2fb178b66c50bb:0xce917bdd12d11132!8m2!3d-27.1207719!4d-48.61759!16s%2Fg%2F11xkr3jfw7' },
@@ -234,10 +236,10 @@ var Mapa = (function () {
       'translate(' + SC_MAP.cluster.cx + ',' + SC_MAP.cluster.cy + ') scale(' + k + ')');
   }
 
-  /* Corporativo e Itapema caem sobre o mesmo ponto neste zoom, e dois rótulos
-     no mesmo lugar viram borrão. Em vez de empurrar o alfinete para fora da
-     coordenada real, escondemos o rótulo que colidiria: o nome continua
-     disponível no selo do mapa e no card, e ao selecionar ele reaparece. */
+  /* Todo alfinete mostra o seu nome, sempre. Corporativo e Itapema caem sobre
+     o mesmo ponto neste zoom, então o rótulo que colidiria sobe para cima do
+     alfinete em vez de sumir: os dois nomes ficam legíveis, mesmo que as
+     caixas se toquem. */
   function ajustaRotulos () {
     var r = svg.getBoundingClientRect();
     var render = Math.min(r.width / VB_W, r.height / VB_H);
@@ -249,32 +251,32 @@ var Mapa = (function () {
       });
     }
 
-    /* os corpos dos alfinetes são obstáculos fixos: o rótulo desvia deles */
-    var ocupado = UNIDADES.map(function (u) {
+    var pinos = UNIDADES.map(function (u) {
       var px = screenX(u.x) * render, py = screenY(u.y) * render;
       return { x1: px - 12, x2: px + 12, y1: py - 32, y2: py + 2 };
     });
+    var rotulos = [];
 
-    /* o selecionado escolhe posição primeiro e sempre aparece */
+    /* o selecionado escolhe posição primeiro */
     var ordem = UNIDADES.slice().sort(function (a, b) {
       return (b.id === active ? 1 : 0) - (a.id === active ? 1 : 0);
     });
 
     ordem.forEach(function (u) {
       var px = screenX(u.x) * render, py = screenY(u.y) * render;
-      var mw = u.curto.length * 3.7;                  /* ~7.3px por caractere */
+      var mw = (u.rotulo || u.curto).length * 3.7;    /* ~7.3px por caractere */
       var abaixo = { x1: px - mw, x2: px + mw, y1: py + 6,  y2: py + 22 };
       var acima  = { x1: px - mw, x2: px + mw, y1: py - 52, y2: py - 36 };
 
-      var pos = !bateEm(abaixo, ocupado) ? abaixo
-              : !bateEm(acima, ocupado)  ? acima : null;
-
-      if (!pos && u.id === active) pos = acima;       /* selecionado nunca some */
-      u.label.style.display = pos ? '' : 'none';
-      if (pos) {
-        u.label.setAttribute('y', pos === abaixo ? 16 : -42);
-        ocupado.push(pos);
+      /* texto sobre texto é ilegível e pesa mais que texto sobre alfinete */
+      function custo (p) {
+        return (bateEm(p, rotulos) ? 2 : 0) + (bateEm(p, pinos) ? 1 : 0);
       }
+      var pos = custo(abaixo) <= custo(acima) ? abaixo : acima;
+
+      u.label.style.display = '';
+      u.label.setAttribute('y', pos === abaixo ? 16 : -42);
+      rotulos.push(pos);
     });
   }
 
@@ -294,7 +296,7 @@ var Mapa = (function () {
 
     /* la = rótulo acima do alfinete, usado quando dois pontos ficam lado a lado */
     var label = el('text', { class: 'pin__label' });
-    label.textContent = u.curto;
+    label.textContent = u.rotulo || u.curto;
     g.appendChild(label);
     u.label = label;
 
